@@ -1,6 +1,23 @@
-let skins = JSON.parse(localStorage.getItem('skins')) || [];
+const API_URL = "https://script.google.com/macros/s/AKfycbwAH5IqsozCDfluJu7yTXX82V0NVVWiQHHwdbuA_UxmgsTP3LBLHhxSrVlczRvtkv6j/exec";
 
-// Display skins
+let skins = [];
+let isAdmin = false;
+
+// جلب السكينات من Google Sheets وعرضها
+function fetchSkins() {
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(data => {
+      skins = data;
+      displaySkins();
+      if (isAdmin) buildOrderControls(); // ترتيب السكينات
+    })
+    .catch(err => {
+      console.error("خطأ في جلب السكينات:", err);
+    });
+}
+
+// عرض السكينات على الصفحة
 function displaySkins() {
   const container = document.getElementById('skinsContainer');
   container.innerHTML = '';
@@ -16,9 +33,9 @@ function displaySkins() {
           <a href="https://discord.gg/9URtB2rF" target="_blank" class="btn btn-discord">Purchase</a>
           ${isAdmin ? `
             <div class="mt-3 d-flex justify-content-between">
-              <button onclick="moveUp(${index})" title="Move Up" class="btn btn-sm btn-primary">⬆️</button>
-              <button onclick="moveDown(${index})" title="Move Down" class="btn btn-sm btn-primary">⬇️</button>
-              <button onclick="deleteSkin(${index})" title="Delete" class="btn btn-sm btn-danger">🗑️</button>
+              <button onclick="moveUp(${index})" class="btn btn-sm btn-primary">⬆️</button>
+              <button onclick="moveDown(${index})" class="btn btn-sm btn-primary">⬇️</button>
+              <button onclick="deleteSkin(${index})" class="btn btn-sm btn-danger">🗑️</button>
             </div>
           ` : ''}
         </div>
@@ -26,9 +43,43 @@ function displaySkins() {
   });
 }
 
-// Control form display and ordering
-let isAdmin = false;
+// إضافة سكين جديد
+function addSkin() {
+  const name = document.getElementById('skinName').value.trim();
+  const image = document.getElementById('skinImage').value.trim();
+  const price = document.getElementById('skinPrice').value.trim();
+  const desc = document.getElementById('skinDesc').value.trim();
 
+  if (!name || !image || !price) {
+    alert('Please fill in the required fields');
+    return;
+  }
+
+  const newSkin = { name, image, price, desc };
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(newSkin),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+    .then(res => res.text())
+    .then(() => {
+      alert("تمت إضافة السكين بنجاح!");
+      document.getElementById("skinName").value = "";
+      document.getElementById("skinImage").value = "";
+      document.getElementById("skinPrice").value = "";
+      document.getElementById("skinDesc").value = "";
+      fetchSkins(); // تحديث العرض بعد الإضافة
+    })
+    .catch(err => {
+      console.error("خطأ في الإضافة:", err);
+      alert("حدث خطأ أثناء الإضافة.");
+    });
+}
+
+// التحقق من كلمة المرور وعرض لوحة التحكم
 function togglePassword() {
   const prompt = document.getElementById('passwordPrompt');
   prompt.style.display = (prompt.style.display === 'none') ? 'block' : 'none';
@@ -47,53 +98,26 @@ function checkPassword() {
   }
 }
 
-function addSkin() {
-  const name = document.getElementById('skinName').value.trim();
-  const image = document.getElementById('skinImage').value.trim();
-  const price = document.getElementById('skinPrice').value.trim();
-  const desc = document.getElementById('skinDesc').value.trim();
-
-  if (!name || !image || !price) {
-    alert('Please fill in the required fields');
-    return;
-  }
-
-  skins.push({ name, image, price, desc });
-  localStorage.setItem('skins', JSON.stringify(skins));
-  displaySkins();
-  buildOrderControls();
-
-  // Clear fields
-  document.getElementById('skinName').value = '';
-  document.getElementById('skinImage').value = '';
-  document.getElementById('skinPrice').value = '';
-  document.getElementById('skinDesc').value = '';
-}
-
+// ترتيب السكينات (محلي فقط — غير محفوظ دائمًا)
 function moveUp(index) {
   if (index === 0) return;
   [skins[index - 1], skins[index]] = [skins[index], skins[index - 1]];
-  saveAndUpdate();
+  displaySkins();
+  buildOrderControls();
 }
 
 function moveDown(index) {
   if (index === skins.length - 1) return;
   [skins[index + 1], skins[index]] = [skins[index], skins[index + 1]];
-  saveAndUpdate();
-}
-
-function deleteSkin(index) {
-  if (!confirm('Are you sure you want to delete this skin?')) return;
-  skins.splice(index, 1);
-  saveAndUpdate();
-}
-
-function saveAndUpdate() {
-  localStorage.setItem('skins', JSON.stringify(skins));
   displaySkins();
   buildOrderControls();
 }
 
+function deleteSkin(index) {
+  alert("خاصية الحذف غير مفعلة حالياً (Google Sheets لا يدعم الحذف عبر API بسهولة)");
+}
+
+// ترتيب السكينات في الواجهة
 function buildOrderControls() {
   const container = document.getElementById('orderControls');
   container.innerHTML = '';
@@ -101,76 +125,37 @@ function buildOrderControls() {
     container.innerHTML += `
       <div class="d-flex align-items-center mb-2">
         <span class="flex-grow-1">${skin.name}</span>
-        <button onclick="moveUp(${index})" title="Move Up">⬆️</button>
-        <button onclick="moveDown(${index})" title="Move Down">⬇️</button>
-        <button onclick="deleteSkin(${index})" title="Delete">🗑️</button>
+        <button onclick="moveUp(${index})">⬆️</button>
+        <button onclick="moveDown(${index})">⬇️</button>
+        <button onclick="deleteSkin(${index})">🗑️</button>
       </div>
     `;
   });
 }
 
-// Initialize particles with mouse movement
+// خلفية الجزيئات
 tsParticles.load("particles-js", {
   fpsLimit: 60,
   interactivity: {
     events: {
-      onHover: {
-        enable: true,
-        mode: "repulse",
-      },
+      onHover: { enable: true, mode: "repulse" },
       resize: true,
     },
     modes: {
-      repulse: {
-        distance: 100,
-        duration: 0.4,
-      },
+      repulse: { distance: 100, duration: 0.4 },
     },
   },
   particles: {
-    color: {
-      value: ["#6c00ff", "#00d4ff"],
-    },
-    links: {
-      color: "#6c00ff",
-      distance: 150,
-      enable: true,
-      opacity: 0.4,
-      width: 1,
-    },
-    collisions: {
-      enable: false,
-    },
-    move: {
-      directions: "none",
-      enable: true,
-      outModes: {
-        default: "bounce",
-      },
-      random: false,
-      speed: 2,
-      straight: false,
-    },
-    number: {
-      density: {
-        enable: true,
-        area: 800,
-      },
-      value: 60,
-    },
-    opacity: {
-      value: 0.5,
-    },
-    shape: {
-      type: "circle",
-    },
-    size: {
-      value: { min: 2, max: 4 },
-    },
+    color: { value: ["#6c00ff", "#00d4ff"] },
+    links: { color: "#6c00ff", distance: 150, enable: true, opacity: 0.4, width: 1 },
+    collisions: { enable: false },
+    move: { directions: "none", enable: true, outModes: { default: "bounce" }, speed: 2 },
+    number: { density: { enable: true, area: 800 }, value: 60 },
+    opacity: { value: 0.5 },
+    shape: { type: "circle" },
+    size: { value: { min: 2, max: 4 } },
   },
   detectRetina: true,
 });
 
-window.onload = () => {
-  displaySkins();
-};
+window.onload = fetchSkins;
