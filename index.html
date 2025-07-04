@@ -1,0 +1,58 @@
+ <!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>URBANXSTUDIO - Roblox Jerseys</title>
+
+  <!-- Bootstrap for screen sizes + icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+
+  <!-- Custom style -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Particles library -->
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.1/tsparticles.bundle.min.js"></script>
+</head>
+
+<body>
+  <button class="gear-btn" onclick="togglePassword()">
+    <i class="bi bi-gear"></i>
+  </button>
+
+  <header class="text-center py-4 bg-dark">
+    <h1 class="text-primary">URBANXSTUDIO - Roblox Jerseys</h1>
+  </header>
+
+  <div id="particles-js" class="position-fixed top-0 start-0 w-100 h-100" style="z-index:-1;"></div>
+
+  <main class="container my-4">
+    <div id="skinsContainer" class="row g-4"></div>
+  </main>
+
+  <!-- Password -->
+  <div id="passwordPrompt" style="display:none;" class="text-center my-3">
+    <input type="password" id="adminPassword" placeholder="Enter Password" />
+    <button onclick="checkPassword()">Enter</button>
+  </div>
+
+  <!-- Add and Edit -->
+  <div id="addSkinForm" style="display:none;" class="container my-5">
+    <h2 class="mb-4">Add New Skin</h2>
+    <input type="text" id="skinName" placeholder="Skin Name" class="form-control mb-2" />
+    <input type="text" id="skinImage" placeholder="Image URL" class="form-control mb-2" />
+    <input type="text" id="skinPrice" placeholder="Price" class="form-control mb-2" />
+    <textarea id="skinDesc" placeholder="Description (optional)" class="form-control mb-2"></textarea>
+    <button onclick="addSkin()" class="btn btn-success">Add</button>
+    <hr />
+    <h3>Skins Order</h3>
+    <div id="orderControls"></div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
